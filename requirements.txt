@@ -1,28 +1,3 @@
-# # Flask Framework
-# Flask
-# Flask-SQLAlchemy
-# Flask-Login
-# Werkzeug
-
-# # Database
-# SQLAlchemy
-
-# # Image Processing & AI
-# opencv-python
-# numpy==1.23.5
-# Pillow
-
-# # For CNN Model (TensorFlow-lite for lightweight deployment)
-# tensorflow-cpu==2.10.0
-
-# # Utilities
-# python-dateutil
-# transformers
-# torch
-# easyocr
-# requests
-# gunicorn
-
 Flask
 Flask-SQLAlchemy
 Flask-Login
@@ -37,3 +12,4 @@ Pillow
 python-dateutil
 requests
 gunicorn
+# updated
