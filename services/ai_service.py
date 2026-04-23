@@ -12,7 +12,7 @@ import ssl
 import sys
 import io
 from config import Config
-from transformers import pipeline
+# from transformers import pipeline
 
 # Bypass SSL for model downloads (EasyOCR needs this in some environments)
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -22,14 +22,21 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
-try:
-    # from transformers import pipeline
-    class AIService:
-      def get_advice(self, medicine_name):
+# try:
+#     # from transformers import pipeline
+#     class AIService:
+#       def get_advice(self, medicine_name):
         
-        return f"Take {medicine_name} on time and follow doctor instructions."
+#         return f"Take {medicine_name} on time and follow doctor instructions."
+#     from PIL import Image
+#     # TRANSFORMERS_AVAILABLE = True
+# except ImportError:
+#     TRANSFORMERS_AVAILABLE = False
+
+
+try:
     from PIL import Image
-    TRANSFORMERS_AVAILABLE = True
+    TRANSFORMERS_AVAILABLE = False  # force disable
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
 
@@ -67,16 +74,19 @@ class AIService:
                 print(f"Failed to initialize EasyOCR: {e}")
         return self.ocr_reader
 
+    # def _get_zs_pipeline(self):
+    #     """Lazy load Zero-Shot pipeline"""
+    #     if self.zs_pipeline is None and TRANSFORMERS_AVAILABLE:
+    #         try:
+    #             print("Initializing local zero-shot image classification model (fallback)...")
+    #             self.zs_pipeline = pipeline("zero-shot-image-classification", model="openai/clip-vit-base-patch32")
+    #             print("Zero-shot model initialized successfully.")
+    #         except Exception as e:
+    #             print(f"Failed to initialize zero-shot model: {e}")
+    #     return self.zs_pipeline
+    
     def _get_zs_pipeline(self):
-        """Lazy load Zero-Shot pipeline"""
-        if self.zs_pipeline is None and TRANSFORMERS_AVAILABLE:
-            try:
-                print("Initializing local zero-shot image classification model (fallback)...")
-                self.zs_pipeline = pipeline("zero-shot-image-classification", model="openai/clip-vit-base-patch32")
-                print("Zero-shot model initialized successfully.")
-            except Exception as e:
-                print(f"Failed to initialize zero-shot model: {e}")
-        return self.zs_pipeline
+     return None
     
     def preprocess_image(self, image_path):
         """
