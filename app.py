@@ -22,17 +22,19 @@ login_manager.login_message_category = 'info'
 
 
 def create_app(config_name='default'):
-    """Application factory function"""
-    
     app = Flask(__name__)
-    app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
     
     # Load configuration
     app.config.from_object(config[config_name])
     
+    # 👉 ADD THIS LINE HERE
+    import os
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "fallback-secret")
+    
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
+    
     
     # Create upload folders
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
