@@ -23,7 +23,8 @@
 # requests
 # gunicorn
 
-
+setuptools
+wheel
 
 Flask
 Flask-SQLAlchemy
