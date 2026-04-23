@@ -23,9 +23,6 @@
 # requests
 # gunicorn
 
-setuptools
-wheel
-
 Flask
 Flask-SQLAlchemy
 Flask-Login
@@ -34,10 +31,8 @@ Werkzeug
 SQLAlchemy
 
 opencv-python
-numpy==1.23.5
+numpy
 Pillow
-
-tensorflow-cpu==2.10.0
 
 python-dateutil
 requests
