@@ -25,6 +25,7 @@ def create_app(config_name='default'):
     """Application factory function"""
     
     app = Flask(__name__)
+    app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
     
     # Load configuration
     app.config.from_object(config[config_name])
