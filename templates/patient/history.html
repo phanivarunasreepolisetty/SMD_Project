@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}History - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <a href="{{ url_for('patient.dashboard') }}" class="back-link">← Back to Dashboard</a>
+            <h1>Medication History</h1>
+            <p class="text-muted">Your recent medication activity</p>
+        </div>
+    </div>
+
+    {% if logs %}
+    <div class="history-list">
+        {% for log in logs %}
+        <div class="history-item status-{{ log.get_status_class() }}">
+            <div class="history-icon">
+                {% if log.status == 'taken' %}✅
+                {% elif log.status == 'missed' %}⚠️
+                {% else %}❌{% endif %}
+            </div>
+            <div class="history-content">
+                <h3>{{ log.medicine.name }}</h3>
+                <p>{{ log.medicine.dosage }}</p>
+                <small>{{ log.get_time_display() }}</small>
+            </div>
+            <div class="history-status">
+                <span class="badge badge-{{ log.get_status_class() }}">
+                    {{ log.status.replace('_', ' ').title() }}
+                </span>
+                {% if log.confidence_score %}
+                <small>{{ (log.confidence_score * 100)|round(1) }}% confidence</small>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state large">
+        <div class="empty-icon">📋</div>
+        <h2>No History Yet</h2>
+        <p>Your medication history will appear here</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

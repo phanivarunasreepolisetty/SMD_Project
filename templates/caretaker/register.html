@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">📝</div>
+            <h1>Create Account</h1>
+            <p>Register as a caretaker to manage patients</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('caretaker.register') }}" class="auth-form">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" required placeholder="John Doe" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required placeholder="your@email.com" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number (Optional)</label>
+                <input type="tel" id="phone" name="phone" placeholder="+91 9876543210" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Create a strong password"
+                    class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required
+                    placeholder="Confirm your password" class="form-input">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Already have an account?
+                <a href="{{ url_for('caretaker.login') }}">Sign in</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

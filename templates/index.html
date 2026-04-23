@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}AI-Based Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-title">
+                <span class="gradient-text">AI-Powered</span><br>
+                Medicine Verification
+            </h1>
+            <p class="hero-subtitle">
+                Ensure medication safety with intelligent tablet recognition.
+                Our AI-based system verifies medicines before intake, preventing
+                medication errors and keeping patients safe.
+            </p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('caretaker.register') }}" class="btn btn-primary btn-lg">
+                    Get Started
+                </a>
+                <a href="{{ url_for('patient.login') }}" class="btn btn-outline btn-lg">
+                    Patient Portal
+                </a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="hero-card">
+                <div class="card-icon">💊</div>
+                <div class="card-text">
+                    <span class="status-dot success"></span>
+                    Correct Medicine Verified
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3>Schedule Medicines</h3>
+                <p>Caretakers register patients and schedule their daily medications with timing and dosage.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📸</div>
+                <h3>Capture Tablet</h3>
+                <p>Before taking medicine, patient captures tablet image using device camera.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI Verification</h3>
+                <p>Our CNN model analyzes the image and verifies if it matches scheduled medicine.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔊</div>
+                <h3>Voice Alert</h3>
+                <p>Get instant voice confirmation for correct medicine or warning for wrong one.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Track Compliance</h3>
+                <p>All activities logged for caretakers to monitor and generate reports.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h3>Stay Safe</h3>
+                <p>Prevent medication errors, ensure correct dosage, and maintain health.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="stats">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">99%</div>
+                <div class="stat-label">Verification Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">0</div>
+                <div class="stat-label">Medication Errors</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Monitoring</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Peace of Mind</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Ready to Get Started?</h2>
+            <p>Register as a caretaker and add your first patient today.</p>
+            <a href="{{ url_for('caretaker.register') }}" class="btn btn-white btn-lg">
+                Create Account
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

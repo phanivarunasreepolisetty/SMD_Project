@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ medicine.name }} - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <a href="{{ url_for('caretaker.patient_detail', id=patient.id) }}" class="back-link">← Back to {{
+                patient.name }}</a>
+            <h1>{{ medicine.name }}</h1>
+            <p class="text-muted">{{ medicine.dosage }} • {{ medicine.frequency }}</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('caretaker.edit_medicine', id=medicine.id) }}" class="btn btn-outline"
+                style="margin-right: 10px;">
+                Edit Details
+            </a>
+            <a href="{{ url_for('caretaker.upload_image', id=medicine.id) }}" class="btn btn-primary">
+                Upload Images
+            </a>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <div class="info-row">
+            <div class="info-item">
+                <div class="info-label">Timing</div>
+                <div class="info-value">{{ medicine.get_timing_display() }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Training Images</div>
+                <div class="info-value">
+                    {% if medicine.has_sufficient_images() %}
+                    <span class="status-good">✅ {{ medicine.get_image_count() }} images</span>
+                    {% else %}
+                    <span class="status-warning">⚠️ {{ medicine.get_image_count() }}/5 images</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Status</div>
+                <div class="info-value">
+                    {% if medicine.is_active %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-danger">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Added</div>
+                <div class="info-value">{{ medicine.created_at.strftime('%d %b %Y') }}</div>
+            </div>
+        </div>
+    </div>
+
+    {% if medicine.instructions %}
+    <div class="content-section">
+        <h2>Special Instructions</h2>
+        <p>{{ medicine.instructions }}</p>
+    </div>
+    {% endif %}
+
+    <div class="content-section">
+        <div class="section-header">
+            <h2>Tablet Images ({{ images|length }})</h2>
+            <a href="{{ url_for('caretaker.upload_image', id=medicine.id) }}" class="btn btn-sm btn-outline">
+                + Add More
+            </a>
+        </div>
+
+        {% if images %}
+        <div class="images-grid">
+            {% for image in images %}
+            <div class="image-card">
+                <img src="{{ url_for('static', filename='../' + image.image_path) }}" alt="Tablet image"
+                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23e0e0e0%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23999%22>Image</text></svg>'">
+                <div class="image-info">
+                    <small>{{ image.uploaded_at.strftime('%d %b %Y') }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📷</div>
+            <p>No images uploaded yet</p>
+            <a href="{{ url_for('caretaker.upload_image', id=medicine.id) }}" class="btn btn-primary btn-sm">
+                Upload First Image
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="danger-zone">
+        <h3>Remove Medicine</h3>
+        <p>This will deactivate the medicine from the patient's schedule.</p>
+        <form method="POST" action="{{ url_for('caretaker.delete_medicine', id=medicine.id) }}"
+            onsubmit="return confirm('Are you sure you want to remove this medicine?');">
+            <button type="submit" class="btn btn-danger">Remove Medicine</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .content-section {
+        background: var(--white);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--gray-200);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .danger-zone {
+        margin-top: var(--spacing-xl);
+        padding: var(--spacing-lg);
+        background: var(--danger-bg);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--danger);
+    }
+
+    .danger-zone h3 {
+        color: var(--danger);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .danger-zone p {
+        margin-bottom: var(--spacing-md);
+        color: var(--gray-600);
+    }
+</style>
+{% endblock %}

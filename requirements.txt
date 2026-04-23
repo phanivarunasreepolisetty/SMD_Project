@@ -1,0 +1,24 @@
+# Flask Framework
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Werkzeug
+
+# Database
+SQLAlchemy
+
+# Image Processing & AI
+opencv-python
+numpy
+Pillow
+
+# For CNN Model (TensorFlow-lite for lightweight deployment)
+tensorflow
+
+# Utilities
+python-dateutil
+transformers
+torch
+easyocr
+requests
+gunicorn

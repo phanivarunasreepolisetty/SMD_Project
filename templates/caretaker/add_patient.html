@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Patient - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-container">
+        <div class="form-header">
+            <a href="{{ url_for('caretaker.patients') }}" class="back-link">← Back to Patients</a>
+            <h1>Add New Patient</h1>
+            <p class="text-muted">Register a new patient to manage their medications</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('caretaker.add_patient') }}" class="styled-form">
+            <div class="form-section">
+                <h3>Personal Information</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Full Name <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" required placeholder="Enter patient's full name"
+                            class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label for="age">Age <span class="required">*</span></label>
+                        <input type="number" id="age" name="age" required min="1" max="120" placeholder="Age in years"
+                            class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Gender <span class="required">*</span></label>
+                        <select id="gender" name="gender" required class="form-input">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="medical_conditions">Medical Conditions</label>
+                    <textarea id="medical_conditions" name="medical_conditions"
+                        placeholder="List any medical conditions (e.g., Diabetes, Hypertension)" class="form-input"
+                        rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Security</h3>
+
+                <div class="form-group">
+                    <label for="pin_code">Patient PIN (Optional)</label>
+                    <input type="password" id="pin_code" name="pin_code" maxlength="6"
+                        placeholder="4-6 digit PIN for patient login" class="form-input">
+                    <small class="form-hint">If set, patient must enter this PIN to access their portal</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Add Patient
+                </button>
+                <a href="{{ url_for('caretaker.patients') }}" class="btn btn-outline btn-lg">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

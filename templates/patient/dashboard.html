@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+
+{% block title %}My Medicines - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="patient-dashboard">
+    <div class="patient-header">
+        <div class="patient-info-bar">
+            <div class="patient-avatar large">
+                {{ patient.name[0].upper() }}
+            </div>
+            <div>
+                <h1>Hello, {{ patient.name }}!</h1>
+                <p class="text-muted">{{ today.strftime('%A, %d %B %Y') }}</p>
+            </div>
+        </div>
+        <a href="{{ url_for('patient.logout') }}" class="btn btn-outline">Logout</a>
+    </div>
+
+    <!-- Current Pending -->
+    {% if current_pending %}
+    <div class="alert-banner" id="reminderBanner">
+        <div class="alert-icon">⏰</div>
+        <div class="alert-text">
+            <strong>Time for your {{ current_slot }} medicine!</strong>
+            <p>{{ current_pending|length }} medicine(s) pending</p>
+        </div>
+        <button class="btn btn-sm btn-outline" style="margin-left: auto;" onclick="dismissReminder()">OK /
+            Dismiss</button>
+    </div>
+    {% endif %}
+
+    <!-- Schedule Overview -->
+    <div class="schedule-overview">
+        <div class="schedule-stat taken">
+            <div class="stat-number">{{ taken|length }}</div>
+            <div class="stat-label">Taken</div>
+        </div>
+        <div class="schedule-stat pending">
+            <div class="stat-number">{{ pending|length }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="schedule-stat missed">
+            <div class="stat-number">{{ missed|length }}</div>
+            <div class="stat-label">Missed</div>
+        </div>
+    </div>
+
+    <!-- Medicine Sections -->
+    <div class="schedule-sections">
+        <!-- Pending Medicines -->
+        {% if pending %}
+        <div class="schedule-section">
+            <h2>⏳ Pending Medicines</h2>
+            <div class="medicine-list">
+                {% for schedule in pending %}
+                <div class="medicine-item pending">
+                    <div class="medicine-time">
+                        <span class="time">{{ schedule.get_time_display() }}</span>
+                        <span class="slot">{{ schedule.time_slot }}</span>
+                    </div>
+                    <div class="medicine-details">
+                        <h3>{{ schedule.medicine.name }}</h3>
+                        <p>{{ schedule.medicine.dosage }} • {{ schedule.medicine.frequency }}</p>
+                        {% if schedule.medicine.instructions %}
+                        <small>{{ schedule.medicine.instructions }}</small>
+                        {% endif %}
+                    </div>
+                    <a href="{{ url_for('patient.take_medicine', schedule_id=schedule.id) }}"
+                        class="btn btn-primary btn-lg take-btn">
+                        Take Medicine
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Taken Medicines -->
+        {% if taken %}
+        <div class="schedule-section completed">
+            <h2>✅ Taken Today</h2>
+            <div class="medicine-list compact">
+                {% for schedule in taken %}
+                <div class="medicine-item taken">
+                    <div class="medicine-time">
+                        <span class="time">{{ schedule.get_time_display() }}</span>
+                    </div>
+                    <div class="medicine-details">
+                        <h3>{{ schedule.medicine.name }}</h3>
+                        <p>{{ schedule.medicine.dosage }}</p>
+                    </div>
+                    <div class="status-icon">✓</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- No Medicines -->
+        {% if not schedules %}
+        <div class="empty-state large">
+            <div class="empty-icon">📋</div>
+            <h2>No Medicines Scheduled</h2>
+            <p>Your caretaker will add your medicines</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Links -->
+    <div class="quick-links">
+        <a href="{{ url_for('patient.history') }}" class="quick-link">
+            <span class="link-icon">📊</span>
+            <span>View History</span>
+        </a>
+    </div>
+
+    <!-- AI Consultation Chat -->
+    <div id="aiChatDrawer" class="chat-drawer">
+        <div class="chat-header">
+            <div class="chat-title">
+                <span class="bot-icon">🤖</span>
+                <div>
+                    <strong>AI Medical Assistant</strong>
+                    <div class="status-online">Online</div>
+                </div>
+            </div>
+            <button class="close-chat" onclick="toggleChat()">×</button>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+            <div class="message bot">
+                Hello! I am your AI medical assistant. How can I help you today?
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleChatKey(event)">
+            <button onclick="sendChatMessage()" id="sendChatBtn">Send</button>
+        </div>
+    </div>
+
+    <!-- AI Floating Assistant Toggle -->
+    <div class="ai-assistant-fab" onclick="toggleChat()" id="aiFab">
+        <span style="font-size: 2rem;">🤖</span>
+        <div class="fab-badge">Ask AI</div>
+    </div>
+</div>
+
+<style>
+.chat-drawer {
+    position: fixed;
+    bottom: 110px;
+    right: 30px;
+    width: 350px;
+    height: 500px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+    display: none;
+    flex-direction: column;
+    z-index: 1001;
+    overflow: hidden;
+    border: 1px solid #eee;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-header {
+    padding: 1rem;
+    background: #007bff;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-online {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+.close-chat {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #f8f9fa;
+}
+
+.message {
+    padding: 10px 15px;
+    border-radius: 15px;
+    max-width: 85%;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.message.bot {
+    background: white;
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.message.user {
+    background: #007bff;
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+}
+
+.chat-input-area {
+    padding: 1rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+}
+
+#chatInput {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 8px 15px;
+    border-radius: 20px;
+    outline: none;
+}
+
+#sendChatBtn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.ai-assistant-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 70px;
+    height: 70px;
+    background: #007bff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0,123,255,0.4);
+    z-index: 1000;
+    animation: bounce 2s infinite;
+}
+
+.fab-badge {
+    position: absolute;
+    top: -10px;
+    right: -5px;
+    background: #ff4757;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-10px);}
+    60% {transform: translateY(-5px);}
+}
+</style>
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // ... (existing reminder logic)
+        
+        // Start background trigger monitor
+        setInterval(checkTriggers, 60000); // Check every minute
+    });
+
+    let activeTriggers = new Set();
+
+    async function checkTriggers() {
+        try {
+            const response = await fetch('/api/check-triggers');
+            const data = await response.json();
+            
+            if (data.success && data.triggers.length > 0) {
+                // Find triggers we haven't announced yet
+                const newTriggers = data.triggers.filter(t => !activeTriggers.has(t.id));
+                
+                if (newTriggers.length > 0) {
+                    const t = newTriggers[0]; // Process one at a time
+                    activeTriggers.add(t.id);
+                    
+                    // Proactive AI Alert
+                    if (typeof VoiceModule !== 'undefined' && VoiceModule.supported) {
+                        const message = `Excuse me, I have an important update. It is now time for your ${t.time_slot} dose of ${t.name}. Please take it now to stay on track.`;
+                        VoiceModule.loopAlert(message);
+                        
+                        // Optionally show a popup or refresh to show the banner
+                        if (!document.getElementById('reminderBanner')) {
+                            location.reload(); // Quickest way to show the new alert banner
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Trigger check error:", e);
+        }
+    }
+
+    function dismissReminder() {
+        // ...
+        const banner = document.getElementById('reminderBanner');
+        if (banner) {
+            banner.style.display = 'none';
+        }
+        if (typeof VoiceModule !== 'undefined') {
+            VoiceModule.stop();
+        }
+    }
+
+    function toggleChat() {
+        const drawer = document.getElementById('aiChatDrawer');
+        const isVisible = drawer.style.display === 'flex';
+        drawer.style.display = isVisible ? 'none' : 'flex';
+        
+        if (!isVisible) {
+            document.getElementById('chatInput').focus();
+            // Stop any ongoing voice alerts when starting a chat
+            if (typeof VoiceModule !== 'undefined') {
+                VoiceModule.stop();
+            }
+        }
+    }
+
+    function handleChatKey(event) {
+        if (event.key === 'Enter') {
+            sendChatMessage();
+        }
+    }
+
+    async function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        if (!message) return;
+
+        // Add user message to UI
+        addMessageToChat('user', message);
+        input.value = '';
+
+        // Show typing indicator
+        const typingId = addMessageToChat('bot', 'AI is thinking...', true);
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            });
+            const data = await response.json();
+            
+            // Remove typing indicator and add response
+            document.getElementById(typingId).remove();
+            
+            if (data.success) {
+                addMessageToChat('bot', data.response);
+                // Also speak the response if supported
+                if (typeof VoiceModule !== 'undefined' && VoiceModule.supported) {
+                    VoiceModule.speak(data.response);
+                }
+            } else {
+                addMessageToChat('bot', "I'm sorry, I couldn't process that. " + data.error);
+            }
+        } catch (e) {
+            document.getElementById(typingId).remove();
+            addMessageToChat('bot', "I'm having trouble connecting to my brain. Please check your internet.");
+        }
+    }
+
+    function addMessageToChat(sender, text, isTyping = false) {
+        const chatMessages = document.getElementById('chatMessages');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+        msgDiv.textContent = text;
+        
+        const id = 'msg-' + Date.now();
+        msgDiv.id = id;
+        
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return id;
+    }
+
+    function startAIConsultation() {
+        toggleChat();
+    }
+</script>
+{% endblock %}
+{% endblock %}

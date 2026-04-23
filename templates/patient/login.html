@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Login - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="auth-container patient-auth">
+    <div class="auth-card large">
+        <div class="auth-header">
+            <div class="auth-icon large">👤</div>
+            <h1>Patient Portal</h1>
+            <p>Select your name and enter PIN to continue</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('patient.login') }}" class="auth-form">
+            <div class="form-group">
+                <label for="patient_id">Select Your Name</label>
+                <select id="patient_id" name="patient_id" required class="form-input large">
+                    <option value="">Choose your name...</option>
+                    {% for patient in patients %}
+                    <option value="{{ patient.id }}">{{ patient.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="pin_code">Enter PIN (if set)</label>
+                <input type="password" id="pin_code" name="pin_code" maxlength="6" placeholder="Enter your PIN"
+                    class="form-input large pin-input" inputmode="numeric">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                Continue
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Are you a caretaker?
+                <a href="{{ url_for('caretaker.login') }}">Login here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

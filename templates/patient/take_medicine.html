@@ -1,0 +1,428 @@
+{% extends 'base.html' %}
+
+{% block title %}Take Medicine - Smart Medicine Dispenser{% endblock %}
+
+{% block head %}
+<style>
+    .camera-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    #cameraFeed {
+        width: 100%;
+        border-radius: 16px;
+        background: #000;
+    }
+
+    #captureCanvas {
+        display: none;
+    }
+
+    .camera-overlay {
+        position: relative;
+    }
+
+    .camera-guide {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        border: 3px dashed rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        pointer-events: none;
+    }
+
+    .result-card {
+        padding: 2rem;
+        border-radius: 16px;
+        text-align: center;
+        margin: 1rem 0;
+    }
+
+    .result-card.success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 2px solid #28a745;
+    }
+
+    .result-card.danger {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        border: 2px solid #dc3545;
+    }
+
+    .result-card.warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+        border: 2px solid #ffc107;
+    }
+
+    .pulse-ring {
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        background: #007bff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 rgba(0, 123, 255, 0.4);
+        animation: pulse 2s infinite;
+        vertical-align: middle;
+        margin-right: 10px;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+    }
+
+    #instructionText {
+        transition: all 0.5s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="take-medicine-page">
+    <div class="page-header centered">
+        <a href="{{ url_for('patient.dashboard') }}" class="back-link">← Back to Dashboard</a>
+        <h1>Verify Medicine</h1>
+        <p class="text-muted">Hold your tablet in front of the camera to verify</p>
+    </div>
+
+    <!-- Medicine Info -->
+    <div class="medicine-info-card">
+        <div class="medicine-icon">💊</div>
+        <div class="medicine-text">
+            <h2>{{ medicine.name }}</h2>
+            <p>{{ medicine.dosage }} • {{ schedule.time_slot.title() }} dose</p>
+            {% if medicine.instructions %}
+            <small>{{ medicine.instructions }}</small>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- AI Voice Assistant Interaction -->
+    <div id="voiceAssistant" class="voice-assistant-ui" style="text-align: center; margin-bottom: 2rem;">
+        <div id="voiceStatus" style="display:none; margin-bottom: 1rem;">
+            <div class="pulse-ring"></div>
+            <p><strong>AI is Listening...</strong></p>
+        </div>
+        <p id="instructionText" style="font-size: 1.2rem; font-weight: 500; color: #007bff;">
+            Initializing AI Assistant...
+        </p>
+    </div>
+
+    <!-- Camera Section -->
+    <div class="camera-section" id="cameraSection" style="display:none; transition: opacity 0.5s;">
+        <div class="camera-container">
+            <div class="camera-overlay">
+                <video id="cameraFeed" autoplay playsinline></video>
+                <div class="camera-guide"></div>
+            </div>
+            <canvas id="captureCanvas"></canvas>
+        </div>
+
+        <div class="camera-controls">
+            <button id="captureBtn" class="btn btn-primary btn-xl" onclick="captureImage()">
+                📷 Capture & Verify
+            </button>
+            <button id="uploadBtn" class="btn btn-outline btn-lg"
+                onclick="document.getElementById('fileInput').click()">
+                📁 Upload Photo
+            </button>
+            <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileUpload(this)">
+
+            <button id="retryBtn" class="btn btn-outline btn-lg" onclick="retryCapture()" style="display:none;">
+                🔄 Try Again
+            </button>
+        </div>
+    </div>
+
+    <!-- Result Section -->
+    <div class="result-section" id="resultSection" style="display:none;">
+        <div id="resultCard" class="result-card">
+            <div id="resultIcon" class="result-icon"></div>
+            <h2 id="resultTitle"></h2>
+            <p id="resultMessage"></p>
+        </div>
+
+        <div class="result-actions">
+            <button id="resultRetryBtn" class="btn btn-outline btn-lg" onclick="retryCapture()" style="display:none;">
+                🔄 Try Again
+            </button>
+            <button id="markMissedBtn" class="btn btn-outline btn-lg" onclick="markMissed()"
+                style="display:none; border-color: #dc3545; color: #dc3545;">
+                ❌ Mark as Missed
+            </button>
+            <a href="{{ url_for('patient.dashboard') }}" class="btn btn-primary btn-lg">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Manual Confirm (Fallback) -->
+    <div class="manual-section">
+        <p class="text-muted">Camera not working?</p>
+        <form method="POST" action="{{ url_for('patient.confirm_intake', schedule_id=schedule.id) }}">
+            <button type="submit" class="btn btn-outline">
+                Confirm Without Verification
+            </button>
+        </form>
+    </div>
+</div>
+
+    <!-- Advice Section (Hidden until verified) -->
+    <div id="adviceSection" class="advice-section" style="display:none; margin-top: 2rem; padding: 1.5rem; background: #e7f3ff; border-radius: 16px; border-left: 5px solid #007bff;">
+        <h3 style="color: #007bff; margin-bottom: 0.5rem;">💡 Precautions &amp; Suggestions</h3>
+        <div id="adviceContent" style="font-size: 1.1rem; line-height: 1.6;">
+            <!-- Content filled by AI -->
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+<script>
+    const scheduleId = parseInt("{{ schedule.id }}", 10);
+    const expectedMedicine = "{{ medicine.name }}";
+
+    // STT State
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            console.log("I heard:", transcript);
+            handleVoiceResponse(transcript);
+        };
+        
+        recognition.onerror = (e) => {
+            console.error("STT Error:", e);
+            // Fallback: move to camera if voice fails
+            startCameraPhase();
+        };
+    }
+
+    // Start camera AND AI greeting on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        // Show camera immediately so they don't have to wait 7+ seconds
+        startCameraPhase();
+        initCamera();
+
+        // AI Greeting + Question (Voice runs in background without blocking UI)
+        setTimeout(() => {
+            if (typeof VoiceModule !== 'undefined' && VoiceModule.supported) {
+                const greeting = `Hello! I am your AI medication assistant. You have a dose of ${expectedMedicine} scheduled.`;
+                VoiceModule.speak(greeting);
+                
+                // We'll skip forcing them to speak since it's causing delays.
+                // Just use camera verify to keep things simple and fast.
+            }
+        }, 1000);
+    });
+
+    function handleVoiceResponse(transcript) {
+        document.getElementById('voiceStatus').style.display = 'none';
+        const lowerTranscript = transcript.toLowerCase();
+        const expectedLower = expectedMedicine.toLowerCase();
+        
+        let feedback = "";
+        if (lowerTranscript.includes(expectedLower) || expectedLower.includes(lowerTranscript)) {
+            feedback = `That's correct! I heard ${transcript}. Now, please show me the tablet in front of the camera so I can verify its appearance.`;
+        } else {
+            feedback = `I heard ${transcript}. Let's double check that. Please show me the tablet so I can be sure.`;
+        }
+        
+        VoiceModule.speak(feedback);
+        startCameraPhase();
+    }
+
+    function startCameraPhase() {
+        document.getElementById('voiceStatus').style.display = 'none';
+        const camSection = document.getElementById('cameraSection');
+        camSection.style.display = 'block';
+        setTimeout(() => { camSection.style.opacity = '1'; }, 50);
+        document.getElementById('instructionText').textContent = "Please hold the tablet steady in front of the camera.";
+    }
+
+    async function captureImage() {
+        const video = document.getElementById('cameraFeed');
+        const canvas = document.getElementById('captureCanvas');
+
+        // Set canvas size
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Draw frame
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+
+        // Get base64 image
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+        // Pause video so user sees the captured frame and knows they can lower the tablet
+        video.pause();
+
+        // Conversational update
+        if (typeof VoiceModule !== 'undefined') {
+            VoiceModule.speak("Thank you. I am now analyzing your tablet. Please wait a moment.");
+        }
+
+        verifyMedicine(imageData);
+    }
+
+    function handleFileUpload(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                if (typeof VoiceModule !== 'undefined') {
+                    VoiceModule.speak("Photo received. Let me check if this is the correct medicine.");
+                }
+                verifyMedicine(e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function verifyMedicine(imageData) {
+        const captureBtn = document.getElementById('captureBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const originalText = captureBtn.textContent;
+
+        const setLoading = (isLoading, text) => {
+            captureBtn.disabled = isLoading;
+            if (uploadBtn) uploadBtn.disabled = isLoading;
+            captureBtn.textContent = isLoading ? text : originalText;
+        };
+
+        setLoading(true, 'Analyzing...');
+
+        try {
+            const captureResponse = await fetch('/api/capture-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData, schedule_id: scheduleId })
+            });
+            const captureResult = await captureResponse.json();
+            if (!captureResult.success) throw new Error(captureResult.error);
+
+            const verifyResponse = await fetch('/api/verify-tablet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_path: captureResult.image_path, schedule_id: scheduleId })
+            });
+            const verifyResult = await verifyResponse.json();
+            if (!verifyResult.success) throw new Error(verifyResult.error || "Verification failed");
+            
+            const decisionResponse = await fetch('/api/process-decision', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    schedule_id: scheduleId,
+                    decision: verifyResult.decision.decision,
+                    predicted_medicine: verifyResult.prediction.medicine_name,
+                    confidence: verifyResult.prediction.confidence,
+                    image_path: captureResult.image_path
+                })
+            });
+            const decisionResult = await decisionResponse.json();
+
+            // Fetch Advice after verification
+            if (decisionResult.status === 'taken') {
+                try {
+                    const adviceResponse = await fetch(`/api/get-medication-advice/${scheduleId}`);
+                    const adviceResult = await adviceResponse.json();
+                    if (adviceResult.success) {
+                        showAdvice(adviceResult.advice);
+                    }
+                } catch (e) { console.error("Advice fetch error:", e); }
+            }
+
+            showResult(decisionResult);
+
+        } catch (error) {
+            console.error(error);
+            showResult({ status: 'error', message: error.message, alert_type: 'warning' });
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    function showAdvice(advice) {
+        const adviceSection = document.getElementById('adviceSection');
+        const adviceContent = document.getElementById('adviceContent');
+        
+        adviceSection.style.display = 'block';
+        adviceContent.innerHTML = `
+            <p><strong>Guidance:</strong> ${advice.indications}</p>
+            <p style="margin-top: 0.5rem;"><strong>Important Warnings:</strong> ${advice.warnings}</p>
+        `;
+
+        // AI Speaks the advice summary
+        if (typeof VoiceModule !== 'undefined') {
+            setTimeout(() => {
+                VoiceModule.speak(`I have found some helpful information for you. ${advice.summary}`);
+            }, 3000); // Speak after the "Success" alert
+        }
+    }
+
+    function showResult(result) {
+        const cameraSection = document.getElementById('cameraSection');
+        const resultSection = document.getElementById('resultSection');
+        const resultCard = document.getElementById('resultCard');
+        const resultIcon = document.getElementById('resultIcon');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultMessage = document.getElementById('resultMessage');
+        const resultRetryBtn = document.getElementById('resultRetryBtn');
+
+        cameraSection.style.display = 'none';
+        resultSection.style.display = 'block';
+        resultCard.className = 'result-card ' + result.alert_type;
+
+        if (result.alert_type === 'success') {
+            resultIcon.textContent = '✅';
+            resultTitle.textContent = 'Correct Medicine!';
+            if (resultRetryBtn) resultRetryBtn.style.display = 'none';
+        } else {
+            resultIcon.textContent = result.alert_type === 'danger' ? '🚨' : '⚠️';
+            resultTitle.textContent = result.alert_type === 'danger' ? 'Wrong Medicine!' : 'Unable to Verify';
+            if (resultRetryBtn) resultRetryBtn.style.display = 'inline-block';
+        }
+
+        resultMessage.textContent = result.message;
+
+        if (typeof VoiceModule !== 'undefined' && result.alert_type !== 'success') {
+            VoiceModule.speak(result.message);
+        }
+    }
+
+    function retryCapture() {
+        document.getElementById('resultSection').style.display = 'none';
+        document.getElementById('adviceSection').style.display = 'none';
+        document.getElementById('cameraSection').style.display = 'block';
+        
+        const video = document.getElementById('cameraFeed');
+        if (video) video.play();
+
+        if (typeof VoiceModule !== 'undefined') {
+            VoiceModule.speak("No problem. Let's try again. Please hold the tablet steady.");
+        }
+    }
+
+    async function markMissed() {
+        if (!confirm("Mark as missed?")) return;
+        const response = await fetch('/api/mark-missed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ schedule_id: scheduleId })
+        });
+        if ((await response.json()).success) window.location.href = "{{ url_for('patient.dashboard') }}";
+    }
+</script>
+{% endblock %}

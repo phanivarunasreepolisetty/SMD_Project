@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Caretaker Login - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">👨‍⚕️</div>
+            <h1>Caretaker Login</h1>
+            <p>Access your dashboard to manage patients</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('caretaker.login') }}" class="auth-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required placeholder="your@email.com" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password"
+                    class="form-input">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                Sign In
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Don't have an account?
+                <a href="{{ url_for('caretaker.register') }}">Register here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

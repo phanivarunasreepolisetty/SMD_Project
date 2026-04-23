@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ patient.name }} - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <a href="{{ url_for('caretaker.patients') }}" class="back-link">← Back to Patients</a>
+            <h1>{{ patient.name }}</h1>
+            <p class="text-muted">{{ patient.age }} years • {{ patient.gender }}</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('caretaker.edit_patient', id=patient.id) }}" class="btn btn-outline">
+                Edit Patient
+            </a>
+            <a href="{{ url_for('caretaker.add_medicine', patient_id=patient.id) }}" class="btn btn-primary">
+                + Add Medicine
+            </a>
+        </div>
+    </div>
+
+    <!-- Patient Info Card -->
+    <div class="info-card">
+        <div class="info-row">
+            <div class="info-item">
+                <div class="info-label">Medical Conditions</div>
+                <div class="info-value">{{ patient.medical_conditions or 'None specified' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Compliance Rate</div>
+                <div class="info-value">
+                    <span class="compliance-badge">{{ patient.get_compliance_rate() }}%</span>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Patient ID</div>
+                <div class="info-value">{{ patient.id }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Registered</div>
+                <div class="info-value">{{ patient.created_at.strftime('%d %b %Y') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="patient-content">
+        <!-- Today's Schedule -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>Today's Schedule</h2>
+            </div>
+
+            {% if today_schedule %}
+            <div class="schedule-list">
+                {% for schedule in today_schedule %}
+                <div class="schedule-item status-{{ schedule.status }}">
+                    <div class="schedule-time">
+                        {{ schedule.get_time_display() }}
+                        <span class="time-slot">{{ schedule.time_slot }}</span>
+                    </div>
+                    <div class="schedule-medicine">
+                        <strong>{{ schedule.medicine.name }}</strong>
+                        <span>{{ schedule.medicine.dosage }}</span>
+                    </div>
+                    <div class="schedule-status">
+                        <span class="badge badge-{{ schedule.status }}">
+                            {{ schedule.status.replace('_', ' ').title() }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No schedules for today</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Medicines -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>Active Medicines</h2>
+            </div>
+
+            {% if medicines %}
+            <div class="medicines-grid">
+                {% for medicine in medicines %}
+                <div class="medicine-card">
+                    <div class="medicine-header">
+                        <h3>{{ medicine.name }}</h3>
+                        <span class="dosage-badge">{{ medicine.dosage }}</span>
+                    </div>
+                    <div class="medicine-body">
+                        <p><strong>Frequency:</strong> {{ medicine.frequency }}</p>
+                        <p><strong>Timing:</strong> {{ medicine.get_timing_display() }}</p>
+                        {% if medicine.instructions %}
+                        <p><strong>Instructions:</strong> {{ medicine.instructions }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="medicine-footer">
+                        <div class="image-status">
+                            {% if medicine.has_sufficient_images() %}
+                            <span class="status-good">✅ {{ medicine.get_image_count() }} images</span>
+                            {% else %}
+                            <span class="status-warning">⚠️ {{ medicine.get_image_count() }}/5 images</span>
+                            {% endif %}
+                        </div>
+                        <div class="medicine-actions">
+                            <a href="{{ url_for('caretaker.upload_image', id=medicine.id) }}"
+                                class="btn btn-sm btn-outline">
+                                Upload Images
+                            </a>
+                            <a href="{{ url_for('caretaker.medicine_detail', id=medicine.id) }}"
+                                class="btn btn-sm btn-primary">
+                                Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">💊</div>
+                <p>No medicines added yet</p>
+                <a href="{{ url_for('caretaker.add_medicine', patient_id=patient.id) }}" class="btn btn-primary btn-sm">
+                    Add Medicine
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Logs -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>Recent Activity</h2>
+            </div>
+
+            {% if recent_logs %}
+            <div class="logs-list">
+                {% for log in recent_logs %}
+                <div class="log-item">
+                    <div class="log-icon log-{{ log.get_status_class() }}">
+                        {% if log.status == 'taken' %}✅
+                        {% elif log.status == 'missed' %}⚠️
+                        {% else %}❌{% endif %}
+                    </div>
+                    <div class="log-content">
+                        <strong>{{ log.medicine.name }}</strong> - {{ log.status.replace('_', ' ').title() }}
+                        <small>{{ log.get_time_display() }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No activity recorded</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

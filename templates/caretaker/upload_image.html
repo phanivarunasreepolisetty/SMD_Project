@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Images - {{ medicine.name }}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-container wide">
+        <div class="form-header">
+            <a href="{{ url_for('caretaker.patient_detail', id=patient.id) }}" class="back-link">← Back to {{
+                patient.name }}</a>
+            <h1>Upload Tablet Images</h1>
+            <p class="text-muted">Upload clear images of {{ medicine.name }} ({{ medicine.dosage }}) for AI training</p>
+        </div>
+
+        <div class="upload-info">
+            <div class="info-box">
+                <h4>📸 Image Guidelines</h4>
+                <ul>
+                    <li>Take clear, well-lit photos of the tablet</li>
+                    <li>Include different angles (front, back, side)</li>
+                    <li>Ensure the tablet is clearly visible</li>
+                    <li>Avoid blurry or dark images</li>
+                    <li>Upload at least 5 images for best accuracy</li>
+                </ul>
+            </div>
+
+            <div class="upload-status">
+                <div
+                    class="status-circle {% if medicine.has_sufficient_images() %}sufficient{% else %}insufficient{% endif %}">
+                    {{ medicine.get_image_count() }}
+                </div>
+                <div class="status-text">
+                    <strong>Images Uploaded</strong>
+                    {% if medicine.has_sufficient_images() %}
+                    <span class="status-good">✅ Sufficient for training</span>
+                    {% else %}
+                    <span class="status-warning">⚠️ Need {{ 5 - medicine.get_image_count() }} more</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('caretaker.upload_image', id=medicine.id) }}"
+            enctype="multipart/form-data" class="upload-form">
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-icon">📷</div>
+                <p>Drag & drop images here or click to browse</p>
+                <input type="file" name="image" id="imageInput" accept="image/*" required class="file-input">
+                <label for="imageInput" class="btn btn-primary">Choose Image</label>
+            </div>
+
+            <div id="preview" class="upload-preview" style="display: none;">
+                <img id="previewImage" src="" alt="Preview">
+                <button type="button" class="btn btn-danger btn-sm" onclick="clearPreview()">Remove</button>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg upload-submit" id="uploadBtn" disabled>
+                Upload Image
+            </button>
+        </form>
+
+        {% if images %}
+        <div class="uploaded-images">
+            <h3>Uploaded Images ({{ images|length }})</h3>
+            <div class="images-grid">
+                {% for image in images %}
+                <div class="image-card" style="position: relative;">
+                    <img src="{{ url_for('static', filename='../' + image.image_path) }}" alt="Tablet image"
+                        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23e0e0e0%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23999%22>Image</text></svg>'">
+                    <div class="image-info">
+                        <small>{{ image.uploaded_at.strftime('%d %b %Y') }}</small>
+                    </div>
+                    <form method="POST" action="{{ url_for('caretaker.delete_image', id=image.id) }}"
+                        onsubmit="return confirm('Are you sure you want to delete this image?');"
+                        style="position: absolute; top: 5px; right: 5px;">
+                        <button type="submit" class="btn btn-danger btn-sm"
+                            style="padding: 2px 6px; border-radius: 50%; width: 24px; height: 24px; line-height: 1;">×</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    const uploadZone = document.getElementById('uploadZone');
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const previewImage = document.getElementById('previewImage');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    imageInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImage.src = e.target.result;
+                preview.style.display = 'flex';
+                uploadBtn.disabled = false;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    uploadZone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', function (e) {
+        uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length) {
+            imageInput.files = files;
+            imageInput.dispatchEvent(new Event('change'));
+        }
+    });
+
+    function clearPreview() {
+        imageInput.value = '';
+        preview.style.display = 'none';
+        uploadBtn.disabled = true;
+    }
+</script>
+{% endblock %}
+{% endblock %}

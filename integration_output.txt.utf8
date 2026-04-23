@@ -1,0 +1,36 @@
+python : [ 
+WARN:0@0.098] global 
+loadsave.cpp:278 
+cv::findDecoder imread_
+('non_existent.jpg'): 
+can't open/read file: 
+check file 
+path/integrity
+At line:1 char:1
++ python test_groq_inte
+gration.py > 
+integration_output.txt 
+2>&1
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ([ WARN:0@0.09   
+ 8]... path/integri    
+ty:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Testing AIService with Groq integration...
+Error initializing Groq client: No module named 'groq'
+No trained model found. Using demo mode.
+Groq Client initialized: False
+
+Testing predict_tablet with fallback...
+Result Success: False
+Medicine Name: None
+Confidence: None
+Message: None

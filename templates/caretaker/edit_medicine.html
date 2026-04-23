@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Medicine - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-container">
+        <div class="form-header">
+            <a href="{{ url_for('caretaker.medicine_detail', id=medicine.id) }}" class="back-link">← Back to
+                Medicine</a>
+            <h1>Edit Medicine</h1>
+            <p class="text-muted">Edit details for {{ medicine.name }}</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('caretaker.edit_medicine', id=medicine.id) }}" class="styled-form">
+            <div class="form-section">
+                <h3>Medicine Details</h3>
+
+                <div class="form-group">
+                    <label for="name">Medicine Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required value="{{ medicine.name }}" class="form-input">
+                </div>
+
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label for="dosage">Dosage <span class="required">*</span></label>
+                        <input type="text" id="dosage" name="dosage" required value="{{ medicine.dosage }}"
+                            class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="frequency">Frequency <span class="required">*</span></label>
+                        <select id="frequency" name="frequency" required class="form-input">
+                            <option value="">Select Frequency</option>
+                            {% for freq in ['Once daily', 'Twice daily', 'Three times daily', 'Four times daily', 'As
+                            needed'] %}
+                            <option value="{{ freq }}" {% if medicine.frequency==freq %}selected{% endif %}>{{ freq }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="instructions">Special Instructions</label>
+                    <textarea id="instructions" name="instructions" class="form-input"
+                        rows="2">{{ medicine.instructions or '' }}</textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Timing Schedule <span class="required">*</span></h3>
+                <p class="section-hint">Select when this medicine should be taken</p>
+
+                <div class="timing-grid">
+                    <!-- Morning -->
+                    <div class="timing-group">
+                        <label class="timing-option">
+                            <input type="checkbox" name="morning" value="1" {% if medicine.morning %}checked{% endif %}
+                                onchange="toggleTime('morning_time', this.checked)">
+                            <div class="timing-card">
+                                <span class="timing-icon">🌅</span>
+                                <span class="timing-label">Morning</span>
+                            </div>
+                        </label>
+                        <input type="time" id="morning_time" name="morning_time"
+                            value="{{ medicine.morning_time.strftime('%H:%M') if medicine.morning_time else '08:00' }}"
+                            class="form-input time-picker" {% if not medicine.morning %}disabled{% endif %}>
+                    </div>
+
+                    <!-- Afternoon -->
+                    <div class="timing-group">
+                        <label class="timing-option">
+                            <input type="checkbox" name="afternoon" value="1" {% if medicine.afternoon %}checked{% endif
+                                %} onchange="toggleTime('afternoon_time', this.checked)">
+                            <div class="timing-card">
+                                <span class="timing-icon">☀️</span>
+                                <span class="timing-label">Afternoon</span>
+                            </div>
+                        </label>
+                        <input type="time" id="afternoon_time" name="afternoon_time"
+                            value="{{ medicine.afternoon_time.strftime('%H:%M') if medicine.afternoon_time else '13:00' }}"
+                            class="form-input time-picker" {% if not medicine.afternoon %}disabled{% endif %}>
+                    </div>
+
+                    <!-- Evening -->
+                    <div class="timing-group">
+                        <label class="timing-option">
+                            <input type="checkbox" name="evening" value="1" {% if medicine.evening %}checked{% endif %}
+                                onchange="toggleTime('evening_time', this.checked)">
+                            <div class="timing-card">
+                                <span class="timing-icon">🌆</span>
+                                <span class="timing-label">Evening</span>
+                            </div>
+                        </label>
+                        <input type="time" id="evening_time" name="evening_time"
+                            value="{{ medicine.evening_time.strftime('%H:%M') if medicine.evening_time else '18:00' }}"
+                            class="form-input time-picker" {% if not medicine.evening %}disabled{% endif %}>
+                    </div>
+
+                    <!-- Night -->
+                    <div class="timing-group">
+                        <label class="timing-option">
+                            <input type="checkbox" name="night" value="1" {% if medicine.night %}checked{% endif %}
+                                onchange="toggleTime('night_time', this.checked)">
+                            <div class="timing-card">
+                                <span class="timing-icon">🌙</span>
+                                <span class="timing-label">Night</span>
+                            </div>
+                        </label>
+                        <input type="time" id="night_time" name="night_time"
+                            value="{{ medicine.night_time.strftime('%H:%M') if medicine.night_time else '21:00' }}"
+                            class="form-input time-picker" {% if not medicine.night %}disabled{% endif %}>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Update Medicine
+                </button>
+                <a href="{{ url_for('caretaker.medicine_detail', id=medicine.id) }}" class="btn btn-outline btn-lg">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleTime(id, checked) {
+        const input = document.getElementById(id);
+        input.disabled = !checked;
+        if (checked) input.focus();
+    }
+</script>
+
+<style>
+    .timing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+
+    .timing-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .time-picker {
+        text-align: center;
+        font-size: 1.1rem;
+        padding: 0.4rem;
+    }
+</style>
+{% endblock %}

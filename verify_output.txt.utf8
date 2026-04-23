@@ -1,0 +1,27 @@
+python : Traceback 
+(most recent call 
+last):
+At line:1 char:1
++ python 
+verify_groq_key.py > 
+verify_output.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Traceback (mo   
+ st recent call las    
+t)::String) [], Re    
+moteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  File "D:\medical des\
+verify_groq_key.py", 
+line 3, in <module>
+    from groq import 
+Groq
+ModuleNotFoundError: 
+No module named 'groq'

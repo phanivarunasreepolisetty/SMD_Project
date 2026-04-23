@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-Based Smart Medicine Dispenser - Intelligent medication management system">
+    <title>{% block title %}Smart Medicine Dispenser{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('main.index') }}" class="nav-brand">
+                <span class="nav-icon">💊</span>
+                <span class="nav-title">MediDispense AI</span>
+            </a>
+            
+            <div class="nav-links">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('caretaker.dashboard') }}" class="nav-link">Dashboard</a>
+                    <a href="{{ url_for('caretaker.patients') }}" class="nav-link">Patients</a>
+                    <a href="{{ url_for('caretaker.reports') }}" class="nav-link">Reports</a>
+                    <div class="nav-user">
+                        <span class="user-name">{{ current_user.name }}</span>
+                        <a href="{{ url_for('caretaker.logout') }}" class="btn btn-outline btn-sm">Logout</a>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('patient.login') }}" class="nav-link">Patient Portal</a>
+                    <a href="{{ url_for('caretaker.login') }}" class="btn btn-primary btn-sm">Caretaker Login</a>
+                {% endif %}
+            </div>
+            
+            <button class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2026 AI-Based Smart Medicine Dispenser | Final Year Project</p>
+            <p class="footer-tech">Built with Flask, SQLite, OpenCV & CNN</p>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

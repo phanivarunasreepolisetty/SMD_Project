@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <div>
+            <h1>Welcome, {{ current_user.name }}!</h1>
+            <p class="text-muted">Today is {{ today.strftime('%A, %d %B %Y') }}</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('caretaker.add_patient') }}" class="btn btn-primary">
+                <span class="btn-icon">+</span> Add Patient
+            </a>
+            <a href="{{ url_for('caretaker.generate_schedule') }}" class="btn btn-outline">
+                Generate Today's Schedule
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-row">
+        <div class="stat-card stat-primary">
+            <div class="stat-icon">📋</div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_schedules }}</div>
+                <div class="stat-label">Total Scheduled</div>
+            </div>
+        </div>
+        <div class="stat-card stat-success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+                <div class="stat-value">{{ taken_count }}</div>
+                <div class="stat-label">Taken</div>
+            </div>
+        </div>
+        <div class="stat-card stat-warning">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-info">
+                <div class="stat-value">{{ pending_count }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        <div class="stat-card stat-danger">
+            <div class="stat-icon">❌</div>
+            <div class="stat-info">
+                <div class="stat-value">{{ missed_count }}</div>
+                <div class="stat-label">Missed</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Patients Overview -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2>Your Patients</h2>
+                <a href="{{ url_for('caretaker.patients') }}" class="link">View All →</a>
+            </div>
+
+            {% if patients %}
+            <div class="patients-grid">
+                {% for patient in patients %}
+                <div class="patient-card">
+                    <div class="patient-avatar">
+                        {{ patient.name[0].upper() }}
+                    </div>
+                    <div class="patient-info">
+                        <h3>{{ patient.name }}</h3>
+                        <p>{{ patient.age }} years • {{ patient.gender }}</p>
+                        <div class="patient-compliance">
+                            <div class="compliance-bar">
+                                <div class="compliance-fill" style="width: {{ patient.get_compliance_rate() }}%"></div>
+                            </div>
+                            <span>{{ patient.get_compliance_rate() }}% compliance</span>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('caretaker.patient_detail', id=patient.id) }}" class="btn btn-sm btn-outline">
+                        View
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <p>No patients added yet</p>
+                <a href="{{ url_for('caretaker.add_patient') }}" class="btn btn-primary btn-sm">
+                    Add First Patient
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Alerts Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2>Alerts</h2>
+            </div>
+
+            {% if alerts %}
+            <div class="alerts-list">
+                {% for alert in alerts %}
+                <div class="alert-item alert-{{ alert.get_status_class() }}">
+                    <div class="alert-icon">
+                        {% if alert.status == 'missed' %}⚠️{% else %}🚨{% endif %}
+                    </div>
+                    <div class="alert-content">
+                        <strong>{{ alert.patient.name }}</strong>
+                        <span>{{ alert.medicine.name }} - {{ alert.status.replace('_', ' ').title() }}</span>
+                        <small>{{ alert.get_time_display() }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">✅</div>
+                <p>No alerts at this time</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="dashboard-section full-width">
+        <div class="section-header">
+            <h2>Recent Activity</h2>
+            <a href="{{ url_for('caretaker.reports') }}" class="link">View Reports →</a>
+        </div>
+
+        {% if recent_logs %}
+        <div class="activity-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Patient</th>
+                        <th>Medicine</th>
+                        <th>Status</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td>{{ log.get_time_display() }}</td>
+                        <td>{{ log.patient.name }}</td>
+                        <td>{{ log.medicine.name }}</td>
+                        <td>
+                            <span class="badge badge-{{ log.get_status_class() }}">
+                                {{ log.status.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if log.confidence_score %}
+                            {{ (log.confidence_score * 100)|round(1) }}%
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <p>No activity recorded yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

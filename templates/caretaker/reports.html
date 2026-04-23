@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports - Smart Medicine Dispenser{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <h1>Reports & Analytics</h1>
+            <p class="text-muted">View compliance statistics and medication history</p>
+        </div>
+    </div>
+
+    <!-- Patient Filter -->
+    <div class="filter-bar">
+        <form method="GET" action="{{ url_for('caretaker.reports') }}" class="filter-form">
+            <div class="form-group">
+                <label for="patient_id">Select Patient</label>
+                <select name="patient_id" id="patient_id" class="form-input" onchange="this.form.submit()">
+                    {% for patient in patients %}
+                    <option value="{{ patient.id }}" {% if selected_patient and selected_patient.id==patient.id
+                        %}selected{% endif %}>
+                        {{ patient.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    {% if selected_patient and report_data %}
+    <!-- Compliance Overview -->
+    <div class="report-section">
+        <h2>Compliance Overview (Last 7 Days)</h2>
+        <p class="text-muted">{{ report_data.start_date.strftime('%d %b') }} - {{ report_data.end_date.strftime('%d %b
+            %Y') }}</p>
+
+        <div class="compliance-cards">
+            <div class="compliance-card primary">
+                <div class="compliance-value">{{ report_data.compliance_rate }}%</div>
+                <div class="compliance-label">Compliance Rate</div>
+                <div class="compliance-bar-large">
+                    <div class="bar-fill" style="width: {{ report_data.compliance_rate }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card stat-info">
+                <div class="stat-value">{{ report_data.total }}</div>
+                <div class="stat-label">Total Scheduled</div>
+            </div>
+            <div class="stat-card stat-success">
+                <div class="stat-value">{{ report_data.taken }}</div>
+                <div class="stat-label">Taken</div>
+            </div>
+            <div class="stat-card stat-warning">
+                <div class="stat-value">{{ report_data.pending }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card stat-danger">
+                <div class="stat-value">{{ report_data.missed }}</div>
+                <div class="stat-label">Missed</div>
+            </div>
+            <div class="stat-card stat-secondary">
+                <div class="stat-value">{{ report_data.wrong }}</div>
+                <div class="stat-label">Wrong Attempts</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="report-section">
+        <h2>Activity Log</h2>
+
+        {% if report_data.logs %}
+        <div class="activity-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Medicine</th>
+                        <th>Status</th>
+                        <th>AI Prediction</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in report_data.logs %}
+                    <tr>
+                        <td>{{ log.get_time_display() }}</td>
+                        <td>{{ log.medicine.name }} ({{ log.medicine.dosage }})</td>
+                        <td>
+                            <span class="badge badge-{{ log.get_status_class() }}">
+                                {{ log.status.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td>{{ log.predicted_medicine or '-' }}</td>
+                        <td>
+                            {% if log.confidence_score %}
+                            {{ (log.confidence_score * 100)|round(1) }}%
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No activity recorded for this period</p>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="empty-state large">
+        <div class="empty-icon">📊</div>
+        <p>Select a patient to view reports</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
